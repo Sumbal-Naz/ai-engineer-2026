@@ -1,6 +1,7 @@
 import pytest
 
-from src.app.main import calculate_years_to_goal, calculate_age
+from src.app.models import Person
+from src.app.services import calculate_years_to_goal, calculate_age
 
 
 def test_calculate_years_to_goal():
@@ -12,3 +13,12 @@ def test_calculate_age():
 def test_invalid_target_year():
     with pytest.raises(ValueError):
         calculate_years_to_goal(2030, 2026)
+
+def test_person():
+    person = Person(
+        name="Sumbal",
+        birth_year=1995
+    )
+
+    assert person.name == "Sumbal"
+    assert person.birth_year == 1995
