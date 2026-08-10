@@ -1,4 +1,4 @@
-from src.app.models import Person
+from src.app.models import Person, AIModel
 from src.app.services import calculate_years_to_goal, calculate_age
 
 
@@ -8,17 +8,25 @@ def main():
 
     years = calculate_years_to_goal(2026, 2030)
     print(f"Years to goal: {years}")
-
+    
     person = Person(
-        name="Sumbal",
-        birth_year=1995
+            name="Sumbal",
+            birth_year=1995
+        )
+    
+    age = calculate_age(
+            person.birth_year,
+            2026)
+    
+    print(f"{person.name}'s age: {age}")
+
+    model = AIModel(
+        name="GPT",
+        provider="OpenAI"
     )
 
-    age = calculate_age(
-        person.birth_year,
-        2026)
-
-    print(f"{person.name}'s age: {age}")
+    print(model.describe())
+   
 
 
 if __name__ == "__main__":
