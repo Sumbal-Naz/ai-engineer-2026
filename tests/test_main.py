@@ -14,6 +14,10 @@ def test_invalid_target_year():
     with pytest.raises(ValueError):
         calculate_years_to_goal(2030, 2026)
 
+def test_invalid_age_value():
+    with pytest.raises(ValueError):
+        calculate_age(2040, 2026)
+
 def test_person():
     person = Person(
         name="Sumbal",

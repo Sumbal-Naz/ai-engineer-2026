@@ -12,14 +12,17 @@ def main():
     person = Person(
             name="Sumbal",
             birth_year=1995
+            #birth_year=2030
         )
     
-    age = calculate_age(
-            person.birth_year,
-            2026)
+    try:
+        age = calculate_age(person.birth_year, 2026)
+        print(f"{person.name}'s age: {age}")
+        
+    except ValueError as error:
+        print(f"Invalid input: {error}")
     
-    print(f"{person.name}'s age: {age}")
-
+    
     model = AIModel(
         name="GPT",
         provider="OpenAI"
