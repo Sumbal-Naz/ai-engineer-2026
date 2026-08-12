@@ -1,8 +1,16 @@
 from src.app.models import Person, AIModel
 from src.app.services import calculate_years_to_goal, calculate_age
 
+def display_person_age(person: Person, current_year: int) -> None:
+    try:
+        age = calculate_age(person.birth_year, current_year)
+        print(f"{person.name}'s age: {age}")
+            
+    except ValueError as error:
+        print(f"Invalid input: {error}")
 
 def main():
+
     print("AI Engineer 2026")
     print("My transition into modern AI engineering has started")
 
@@ -15,12 +23,7 @@ def main():
             #birth_year=2030
         )
     
-    try:
-        age = calculate_age(person.birth_year, 2026)
-        print(f"{person.name}'s age: {age}")
-        
-    except ValueError as error:
-        print(f"Invalid input: {error}")
+    display_person_age(person, 2026)
     
     
     model = AIModel(
