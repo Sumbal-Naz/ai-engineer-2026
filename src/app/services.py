@@ -7,3 +7,4 @@ def calculate_age(birth_year: int, current_year: int) -> int:
     if birth_year > current_year:
         raise ValueError("Birth year cannot be after current year")
     return current_year - birth_year
+

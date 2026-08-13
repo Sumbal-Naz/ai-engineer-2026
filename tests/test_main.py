@@ -3,12 +3,15 @@ import pytest
 from src.app.models import Person, AIModel
 from src.app.services import calculate_years_to_goal, calculate_age
 
-
 def test_calculate_years_to_goal():
     assert calculate_years_to_goal(2026, 2030) == 4
 
 def test_calculate_age():
     assert calculate_age(1995, 2026) == 31
+
+def test_invalid_calculate_age():
+    with pytest.raises(ValueError):
+            calculate_age(2030, 2026)
 
 def test_invalid_target_year():
     with pytest.raises(ValueError):
@@ -36,3 +39,5 @@ def test_AIModel():
     assert model.name == "GPT"
     assert model.provider == "OpenAI"
     assert model.describe() == "GPT is provided by OpenAI."
+
+
