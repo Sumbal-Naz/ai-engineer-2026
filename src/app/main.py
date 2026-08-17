@@ -1,5 +1,6 @@
 from src.app.models import Person, AIModel
 from src.app.services import calculate_years_to_goal, calculate_age
+from src.app.config import APP_NAME, AI_PROVIDER
 
 def display_person_age(person: Person, current_year: int) -> None:
     try:
@@ -11,7 +12,7 @@ def display_person_age(person: Person, current_year: int) -> None:
 
 def main():
 
-    print("AI Engineer 2026")
+    print(APP_NAME)
     print("My transition into modern AI engineering has started")
 
     years = calculate_years_to_goal(2026, 2030)
@@ -28,7 +29,7 @@ def main():
     
     model = AIModel(
         name="GPT",
-        provider="OpenAI"
+        provider=AI_PROVIDER
     )
 
     print(model.describe())
