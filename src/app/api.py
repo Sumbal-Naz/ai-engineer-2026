@@ -8,6 +8,16 @@ from src.app.schemas import AIModelResponse, AIModelRequest
 
 app = FastAPI()
 
+@app.post("/model", response_model=AIModelResponse)
+def create_model(
+    model_data: AIModelRequest,
+    db: Session = Depends(get_db)
+):
+    return create_ai_model(
+        db,
+        model_data.name,
+        model_data.provider
+    )
 
 @app.get("/")
 def root():
@@ -36,16 +46,6 @@ def get_model():
         "description": model.describe()
     }
 
-@app.post("/model", response_model=AIModelResponse)
-def create_model(
-    model_data: AIModelRequest,
-    db: Session = Depends(get_db)
-):
-    return create_ai_model(
-        db,
-        model_data.name,
-        model_data.provider
-    )
 
 @app.get("/models")
 def list_models(
