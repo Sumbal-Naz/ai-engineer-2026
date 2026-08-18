@@ -1,4 +1,8 @@
 from dataclasses import dataclass
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from src.app.database import Base
 
 @dataclass
 class Person:
@@ -18,3 +22,20 @@ class AIModel:
 
     def describe(self) -> str:
         return f"{self.name} is provided by {self.provider}."
+
+class AIModelDB(Base):
+    __tablename__ = "ai_models"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True
+    )
+
+    name: Mapped[str] = mapped_column(
+        String(100)
+    )
+
+    provider: Mapped[str] = mapped_column(
+        String(100)
+    )
+
