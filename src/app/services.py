@@ -54,3 +54,17 @@ def update_ai_model(
 
     return model
 
+def delete_ai_model(
+        db: Session,
+        model_id: int
+) -> AIModelDB | None:
+
+    model = get_model_by_id(db, model_id)
+
+    if model is None:
+        return None
+
+    db.delete(model)
+    db.commit()
+
+    return model

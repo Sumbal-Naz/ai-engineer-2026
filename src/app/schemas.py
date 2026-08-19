@@ -24,4 +24,7 @@ class AIModelUpdate(BaseModel):
     name: str
     provider: str
 
+class AIModelDelete(BaseModel):
+    id: int
+
 

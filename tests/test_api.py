@@ -84,3 +84,41 @@ def test_update_model_not_found():
     assert response.json() == {
         "detail": "Model not found"
     }
+
+def test_delete_model():
+    # Create a model first
+    create_response = client.post(
+        "/model",
+        json={
+            "name": "Test Model",
+            "provider": "Test Provider"
+        }
+    )
+
+    assert create_response.status_code == 200
+
+    model_id = create_response.json()["id"]
+
+    # Delete the model
+    response = client.delete(f"/model/{model_id}")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": model_id
+    }
+
+    # Verify that the model is actually gone
+    get_response = client.get(f"/model/{model_id}")
+
+    assert get_response.status_code == 404
+    assert get_response.json() == {
+        "detail": "Model not found"
+    }
+
+def test_delete_model_not_found():
+    response = client.delete("/model/99999")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "Model not found"
+    }

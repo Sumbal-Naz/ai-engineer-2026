@@ -7,16 +7,40 @@ from src.app.models import AIModel
 from src.app.schemas import (
     AIModelResponse,
     AIModelRequest,
-    AIModelUpdate)
+    AIModelUpdate,
+    AIModelDelete)
 
 from src.app.services import (
     create_ai_model,
     get_ai_models,
     get_model_by_id,
-    update_ai_model)
+    update_ai_model,
+    delete_ai_model)
 
 app = FastAPI()
 
+# read sample 1
+@app.get("/")
+def root():
+    return {
+        "message": "AI Engineer 2026 API"
+    }
+
+# read sample 2
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy"
+    }
+
+# read data sample 1
+@app.get("/models")
+def list_models(
+    db: Session = Depends(get_db)
+):
+    return get_ai_models(db)
+
+# add data
 @app.post("/model", response_model=AIModelResponse)
 def create_model(
     model_data: AIModelRequest,
@@ -28,20 +52,7 @@ def create_model(
         model_data.provider
     )
 
-@app.get("/")
-def root():
-    return {
-        "message": "AI Engineer 2026 API"
-    }
-
-
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy"
-    }
-
-
+# read data
 @app.get("/model", response_model=AIModelResponse)
 def get_model():
     model = AIModel(
@@ -56,12 +67,6 @@ def get_model():
         "description": model.describe()
     }
 
-
-@app.get("/models")
-def list_models(
-    db: Session = Depends(get_db)
-):
-    return get_ai_models(db)
 
 @app.get("/model/{model_id}", response_model=AIModelResponse)
 def get_model_by_id_endpoint(
@@ -78,6 +83,7 @@ def get_model_by_id_endpoint(
 
     return model
 
+# update/add data
 @app.put("/model/{model_id}", response_model=AIModelResponse)
 def update_model(
     model_id: int,
@@ -97,4 +103,21 @@ def update_model(
             detail="Model not found"
         )
 
+    return model
+
+@app.delete("/model/{model_id}", response_model=AIModelDelete)
+def delete_model(
+    model_id: int,
+    db: Session = Depends(get_db)
+):
+    model = delete_ai_model(
+        db,
+        model_id
+    )
+    if model is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Model not found"
+        )
+        
     return model
