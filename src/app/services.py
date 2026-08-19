@@ -30,3 +30,27 @@ def create_ai_model(
 
 def get_ai_models(db: Session) -> list[AIModelDB]:
     return db.query(AIModelDB).all()
+
+def get_model_by_id(db: Session, model_id: int) -> AIModelDB | None:
+    return db.query(AIModelDB).filter(AIModelDB.id == model_id).first()
+
+def update_ai_model(
+        db: Session,
+        model_id: int,
+        name: str,
+        provider: str
+) -> AIModelDB | None:
+
+    model = get_model_by_id(db, model_id)
+
+    if model is None:
+        return None
+
+    model.name = name
+    model.provider = provider
+
+    db.commit()
+    db.refresh(model)
+
+    return model
+

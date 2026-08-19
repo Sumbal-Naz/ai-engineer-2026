@@ -7,6 +7,7 @@ class AIModelRequest(BaseModel):
 
 
 class AIModelResponse(BaseModel):
+    id: int
     name: str
     provider: str
 
@@ -18,3 +19,9 @@ class AIModelResponse(BaseModel):
     @property
     def description(self) -> str:
         return f"{self.name} is provided by {self.provider}."
+
+class AIModelUpdate(BaseModel):
+    name: str
+    provider: str
+
+
