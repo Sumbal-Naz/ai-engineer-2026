@@ -1,4 +1,5 @@
 
+
 def greet(name: str) -> str:
     return f"Hello {name}"
 
@@ -31,10 +32,3 @@ def get_phone(user_id: int) -> str | None:
 def process_id(user_id: int | str) -> str:
     return str(user_id)
 
-def get_project_status(project_id: int | str) -> str | None:
-    if project_id == "1" or project_id == 1:
-        return "completed"
-    elif project_id == "2" or project_id == 2:
-        return "in_progress"
-    else:
-        return None

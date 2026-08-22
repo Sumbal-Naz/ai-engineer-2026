@@ -1,4 +1,6 @@
 import pytest
+from src.app.main import get_project_status
+from src.app.exceptions import InvalidProjectIDError
 
 from src.app.models import Person, AIModel
 from src.app.services import calculate_years_to_goal, calculate_age
@@ -40,4 +42,19 @@ def test_AIModel():
     assert model.provider == "OpenAI"
     assert model.describe() == "GPT is provided by OpenAI."
 
+def test_get_project_status():
+    assert get_project_status(1) == "completed"
+    assert get_project_status(2) == "in_progress"
+    assert get_project_status("1") == "completed"
+    assert get_project_status("2") == "in_progress"
 
+
+def test_get_project_status_invalid_id():
+    with pytest.raises(InvalidProjectIDError):
+        get_project_status(99)
+
+
+def test_get_project_status_invalid_input():
+    with pytest.raises(InvalidProjectIDError):
+        get_project_status("abc")
+    

@@ -3,6 +3,16 @@ from src.app.services import calculate_years_to_goal, calculate_age
 from src.app.config import APP_NAME, AI_PROVIDER
 
 from src.app.dataclass_examples import ProjectStatus, AIProject
+from src.app.exceptions import InvalidProjectIDError
+
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 # sample function to display age of a person
 def display_person_age(person: Person, current_year: int) -> None:
@@ -12,6 +22,29 @@ def display_person_age(person: Person, current_year: int) -> None:
             
     except ValueError as error:
         print(f"Invalid input: {error}")
+
+# exceptions and logging
+def get_project_status(project_id: int | str) -> str:
+
+    logger.info(
+        "Checking project status for ID: %s",
+        project_id
+    )
+
+    if project_id == "1" or project_id == 1:
+        return "completed"
+
+    elif project_id == "2" or project_id == 2:
+        return "in_progress"
+
+    logger.warning(
+        "Invalid project ID received: %s",
+        project_id
+    )
+
+    raise InvalidProjectIDError(
+        f"Unknown project ID: {project_id}"
+    )
 
 # entry point
 def main():
