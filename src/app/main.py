@@ -2,6 +2,9 @@ from src.app.models import Person, AIModel
 from src.app.services import calculate_years_to_goal, calculate_age
 from src.app.config import APP_NAME, AI_PROVIDER
 
+from src.app.dataclass_examples import ProjectStatus, AIProject
+
+# sample function to display age of a person
 def display_person_age(person: Person, current_year: int) -> None:
     try:
         age = calculate_age(person.birth_year, current_year)
@@ -10,6 +13,7 @@ def display_person_age(person: Person, current_year: int) -> None:
     except ValueError as error:
         print(f"Invalid input: {error}")
 
+# entry point
 def main():
 
     print(APP_NAME)
@@ -25,7 +29,8 @@ def main():
         )
     
     display_person_age(person, 2026)
-    
+
+    # sample model example
     
     model = AIModel(
         name="GPT",
@@ -33,8 +38,16 @@ def main():
     )
 
     print(model.describe())
-   
 
+    # dataclass examples
+    project = AIProject(
+        name="AI Engineer 2026",
+        technology="FastAPI",
+        days=180,
+        status=ProjectStatus.IN_PROGRESS
+    )
+
+    print(project)
 
 if __name__ == "__main__":
     main()
