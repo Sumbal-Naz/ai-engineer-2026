@@ -122,3 +122,48 @@ def test_delete_model_not_found():
     assert response.json() == {
         "detail": "Model not found"
     }
+
+def test_create_model_invalid_name():
+    response = client.post(
+        "/model",
+        json={
+            "name": "",
+            "provider": "OpenAI"
+        }
+    )
+
+    assert response.status_code == 422
+
+def test_create_model_invalid_provider():
+    response = client.post(
+        "/model",
+        json={
+            "name": "GPT",
+            "provider": ""
+        }
+    )
+
+    assert response.status_code == 422
+
+def test_update_model_invalid_name():
+    response = client.put(
+        "/model/1",
+        json={
+            "name": "",
+            "provider": "OpenAI"
+        }
+    )
+
+    assert response.status_code == 422
+
+def test_update_model_invalid_provider():
+    response = client.put(
+        "/model/1",
+        json={
+            "name": "GPT",
+            "provider": ""
+        }
+    )
+
+    assert response.status_code == 422
+

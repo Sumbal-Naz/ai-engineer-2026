@@ -1,6 +1,6 @@
 import pytest
 
-from src.app.models import Person, AIModel
+from src.app.models import Person
 from src.app.services import calculate_years_to_goal, calculate_age
 
 def test_calculate_years_to_goal():
@@ -30,13 +30,5 @@ def test_person():
     assert person.name == "Sumbal"
     assert person.birth_year == 1995
 
-def test_AIModel():
-    model = AIModel(
-        name="GPT",
-        provider="OpenAI"
-    )
 
-    assert model.name == "GPT"
-    assert model.provider == "OpenAI"
-    assert model.describe() == "GPT is provided by OpenAI."
 

@@ -1,9 +1,18 @@
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 
 class AIModelRequest(BaseModel):
-    name: str
-    provider: str
+    name: str = Field(min_length=2)
+    provider: str = Field(min_length=2)
+
+    @field_validator("name", "provider")
+    @classmethod
+    def strip_whitespace(cls, value: str) -> str:
+        value = value.strip()
+
+        if not value:
+            raise ValueError("Value cannot be empty")
+        return value
 
 
 class AIModelResponse(BaseModel):
@@ -21,8 +30,18 @@ class AIModelResponse(BaseModel):
         return f"{self.name} is provided by {self.provider}."
 
 class AIModelUpdate(BaseModel):
-    name: str
-    provider: str
+    name: str = Field(min_length=2)
+    provider: str = Field(min_length=2)
+
+    @field_validator("name", "provider")
+    @classmethod
+    def strip_whitespace(cls, value: str) -> str:
+        value = value.strip()
+
+        if not value:
+            raise ValueError("Value cannot be empty")
+
+        return value
 
 class AIModelDelete(BaseModel):
     id: int
