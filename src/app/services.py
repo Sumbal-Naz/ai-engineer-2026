@@ -1,6 +1,12 @@
 from sqlalchemy.orm import Session
 from src.app.models import AIModelDB
 
+import logging
+
+from .exceptions import InvalidProjectIDError
+
+logger = logging.getLogger(__name__)
+
 def calculate_years_to_goal(current_year: int, target_year: int) -> int:
     if target_year < current_year:
         raise ValueError("Target year cannot be before current year")
@@ -68,3 +74,25 @@ def delete_ai_model(
     db.commit()
 
     return model
+
+# exceptions and logging
+def get_project_status(project_id: int | str) -> str:
+    logger.info(
+        "Checking project status for ID: %s",
+        project_id
+    )
+
+    if project_id == "1" or project_id == 1:
+        return "completed"
+
+    elif project_id == "2" or project_id == 2:
+        return "in_progress"
+
+    logger.warning(
+        "Invalid project ID received: %s",
+        project_id
+    )
+
+    raise InvalidProjectIDError(
+        f"Unknown project ID: {project_id}"
+    )
