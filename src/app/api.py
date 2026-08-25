@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from src.app.config import settings
 from sqlalchemy.orm import Session
 
 from src.app.database import get_db
@@ -17,7 +18,10 @@ from src.app.services import (
     update_ai_model,
     delete_ai_model)
 
-app = FastAPI()
+app = FastAPI(
+    title=settings.app_name,
+    debug=settings.debug
+)
 
 # read sample 1
 @app.get("/")
