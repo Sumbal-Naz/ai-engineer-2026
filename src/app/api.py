@@ -1,9 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from src.app.config import settings
 from sqlalchemy.orm import Session
 
 from src.app.database import get_db
-from src.app.models import AIModel
 
 from src.app.schemas import (
     AIModelResponse,
@@ -45,7 +44,7 @@ def list_models(
     return get_ai_models(db)
 
 # add data
-@app.post("/model", response_model=AIModelResponse)
+@app.post("/models", response_model=AIModelResponse, status_code=status.HTTP_201_CREATED)
 def create_model(
     model_data: AIModelRequest,
     db: Session = Depends(get_db)
@@ -56,23 +55,7 @@ def create_model(
         model_data.provider
     )
 
-# read data
-@app.get("/model", response_model=AIModelResponse)
-def get_model():
-    model = AIModel(
-        name="GPT",
-        provider="OpenAI"
-    )
-
-    return {
-        "id": 0,
-        "name": model.name,
-        "provider": model.provider,
-        "description": model.describe()
-    }
-
-
-@app.get("/model/{model_id}", response_model=AIModelResponse)
+@app.get("/models/{model_id}", response_model=AIModelResponse)
 def get_model_by_id_endpoint(
     model_id: int,
     db: Session = Depends(get_db)
@@ -88,7 +71,7 @@ def get_model_by_id_endpoint(
     return model
 
 # update/add data
-@app.put("/model/{model_id}", response_model=AIModelResponse)
+@app.put("/models/{model_id}", response_model=AIModelResponse)
 def update_model(
     model_id: int,
     model_data: AIModelUpdate,
@@ -109,7 +92,7 @@ def update_model(
 
     return model
 
-@app.delete("/model/{model_id}", response_model=AIModelDelete)
+@app.delete("/models/{model_id}", response_model=AIModelDelete)
 def delete_model(
     model_id: int,
     db: Session = Depends(get_db)
@@ -125,3 +108,4 @@ def delete_model(
         )
         
     return model
+

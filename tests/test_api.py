@@ -18,33 +18,51 @@ def test_health():
         "status": "healthy"
     }
 
-def test_get_model():
-    response = client.get("/model")
-    assert response.status_code == 200
-    data =  response.json()
+# Test that the health endpoint returns JSON
+def test_health_response_headers():
+    response = client.get("/health")
 
-    assert data["name"] == "GPT"
-    assert data["provider"] == "OpenAI"
-    assert data["description"] == "GPT is provided by OpenAI."
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith(
+        "application/json"
+    )
+
+def test_list_models():
+    response = client.get("/models")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert isinstance(data, list)
+
+# Test that GET /models/{id} returns 404 when the model does not exist
+def test_get_model_not_found():
+    response = client.get("/models/999999")
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "Model not found"
+    }
 
 def test_update_model():
     # Create a model
     create_response = client.post(
-        "/model",
+        "/models",
         json={
             "name": "Test Model",
             "provider": "Test Provider"
         }
     )
 
-    assert create_response.status_code == 200
+    assert create_response.status_code == 201
 
     created_model = create_response.json()
     model_id = created_model["id"]
 
     # Update the model
     response = client.put(
-        f"/model/{model_id}",
+        f"/models/{model_id}",
         json={
             "name": "Updated Model",
             "provider": "OpenAI"
@@ -61,7 +79,7 @@ def test_update_model():
     assert data["description"] == "Updated Model is provided by OpenAI."
 
     # Read the model again from the API
-    get_response = client.get(f"/model/{model_id}")
+    get_response = client.get(f"/models/{model_id}")
 
     assert get_response.status_code == 200
 
@@ -71,9 +89,26 @@ def test_update_model():
     assert saved_model["name"] == "Updated Model"
     assert saved_model["provider"] == "OpenAI"
 
+# Test that POST /models creates a new model and returns 201 Created
+def test_create_model_returns_201():
+    response = client.post(
+        "/models",
+        json={
+            "name": "HTTP Test Model",
+            "provider": "OpenAI"
+        }
+    )
+
+    assert response.status_code == 201
+
+    data = response.json()
+
+    assert data["name"] == "HTTP Test Model"
+    assert data["provider"] == "OpenAI"
+
 def test_update_model_not_found():
     response = client.put(
-        "/model/999999",
+        "/models/999999",
         json={
             "name": "Updated Model",
             "provider": "OpenAI"
@@ -88,19 +123,19 @@ def test_update_model_not_found():
 def test_delete_model():
     # Create a model first
     create_response = client.post(
-        "/model",
+        "/models",
         json={
             "name": "Test Model",
             "provider": "Test Provider"
         }
     )
 
-    assert create_response.status_code == 200
+    assert create_response.status_code == 201
 
     model_id = create_response.json()["id"]
 
     # Delete the model
-    response = client.delete(f"/model/{model_id}")
+    response = client.delete(f"/models/{model_id}")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -108,7 +143,7 @@ def test_delete_model():
     }
 
     # Verify that the model is actually gone
-    get_response = client.get(f"/model/{model_id}")
+    get_response = client.get(f"/models/{model_id}")
 
     assert get_response.status_code == 404
     assert get_response.json() == {
@@ -116,7 +151,7 @@ def test_delete_model():
     }
 
 def test_delete_model_not_found():
-    response = client.delete("/model/99999")
+    response = client.delete("/models/99999")
 
     assert response.status_code == 404
     assert response.json() == {
@@ -125,7 +160,7 @@ def test_delete_model_not_found():
 
 def test_create_model_invalid_name():
     response = client.post(
-        "/model",
+        "/models",
         json={
             "name": "",
             "provider": "OpenAI"
@@ -136,7 +171,7 @@ def test_create_model_invalid_name():
 
 def test_create_model_invalid_provider():
     response = client.post(
-        "/model",
+        "/models",
         json={
             "name": "GPT",
             "provider": ""
@@ -145,9 +180,20 @@ def test_create_model_invalid_provider():
 
     assert response.status_code == 422
 
+# Test that POST /models returns 422 when a required field is missing
+def test_create_model_missing_provider():
+    response = client.post(
+        "/models",
+        json={
+            "name": "GPT"
+        }
+    )
+
+    assert response.status_code == 422
+
 def test_update_model_invalid_name():
     response = client.put(
-        "/model/1",
+        "/models/1",
         json={
             "name": "",
             "provider": "OpenAI"
@@ -158,7 +204,7 @@ def test_update_model_invalid_name():
 
 def test_update_model_invalid_provider():
     response = client.put(
-        "/model/1",
+        "/models/1",
         json={
             "name": "GPT",
             "provider": ""
