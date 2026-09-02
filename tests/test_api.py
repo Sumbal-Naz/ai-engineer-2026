@@ -2,21 +2,30 @@ from fastapi.testclient import TestClient
 
 from src.app.api import app
 
+
+# Create a test client for sending HTTP requests to the FastAPI app
 client = TestClient(app)
 
+
+# Test that the root endpoint returns the expected message
 def test_root():
     response = client.get("/")
+
     assert response.status_code == 200
     assert response.json() == {
         "message": "AI Engineer 2026 API"
     }
 
+
+# Test that the health endpoint returns a healthy status
 def test_health():
     response = client.get("/health")
+
     assert response.status_code == 200
     assert response.json() == {
         "status": "healthy"
     }
+
 
 # Test that the health endpoint returns JSON
 def test_health_response_headers():
@@ -27,6 +36,8 @@ def test_health_response_headers():
         "application/json"
     )
 
+
+# Test that GET /models returns a list of models
 def test_list_models():
     response = client.get("/models")
 
@@ -35,6 +46,7 @@ def test_list_models():
     data = response.json()
 
     assert isinstance(data, list)
+
 
 # Test that GET /models/{id} returns 404 when the model does not exist
 def test_get_model_not_found():
@@ -45,8 +57,10 @@ def test_get_model_not_found():
         "detail": "Model not found"
     }
 
+
+# Test that an existing model can be updated
 def test_update_model():
-    # Create a model
+    # Create a model first
     create_response = client.post(
         "/models",
         json={
@@ -78,7 +92,7 @@ def test_update_model():
     assert data["provider"] == "OpenAI"
     assert data["description"] == "Updated Model is provided by OpenAI."
 
-    # Read the model again from the API
+    # Read the model again to confirm the update was saved
     get_response = client.get(f"/models/{model_id}")
 
     assert get_response.status_code == 200
@@ -88,6 +102,7 @@ def test_update_model():
     assert saved_model["id"] == model_id
     assert saved_model["name"] == "Updated Model"
     assert saved_model["provider"] == "OpenAI"
+
 
 # Test that POST /models creates a new model and returns 201 Created
 def test_create_model_returns_201():
@@ -106,6 +121,8 @@ def test_create_model_returns_201():
     assert data["name"] == "HTTP Test Model"
     assert data["provider"] == "OpenAI"
 
+
+# Test that updating a non-existent model returns 404
 def test_update_model_not_found():
     response = client.put(
         "/models/999999",
@@ -120,6 +137,8 @@ def test_update_model_not_found():
         "detail": "Model not found"
     }
 
+
+# Test that an existing model can be deleted
 def test_delete_model():
     # Create a model first
     create_response = client.post(
@@ -150,6 +169,8 @@ def test_delete_model():
         "detail": "Model not found"
     }
 
+
+# Test that deleting a non-existent model returns 404
 def test_delete_model_not_found():
     response = client.delete("/models/99999")
 
@@ -158,6 +179,8 @@ def test_delete_model_not_found():
         "detail": "Model not found"
     }
 
+
+# Test that creating a model with an empty name returns 422
 def test_create_model_invalid_name():
     response = client.post(
         "/models",
@@ -169,6 +192,8 @@ def test_create_model_invalid_name():
 
     assert response.status_code == 422
 
+
+# Test that creating a model with an empty provider returns 422
 def test_create_model_invalid_provider():
     response = client.post(
         "/models",
@@ -180,7 +205,8 @@ def test_create_model_invalid_provider():
 
     assert response.status_code == 422
 
-# Test that POST /models returns 422 when a required field is missing
+
+# Test that creating a model without the required provider field returns 422
 def test_create_model_missing_provider():
     response = client.post(
         "/models",
@@ -191,6 +217,8 @@ def test_create_model_missing_provider():
 
     assert response.status_code == 422
 
+
+# Test that updating a model with an empty name returns 422
 def test_update_model_invalid_name():
     response = client.put(
         "/models/1",
@@ -202,6 +230,8 @@ def test_update_model_invalid_name():
 
     assert response.status_code == 422
 
+
+# Test that updating a model with an empty provider returns 422
 def test_update_model_invalid_provider():
     response = client.put(
         "/models/1",
@@ -213,3 +243,28 @@ def test_update_model_invalid_provider():
 
     assert response.status_code == 422
 
+def test_protected_route_without_api_key():
+    # Send a request without the required API key.
+    response = client.get("/protected")
+
+    # The request should be rejected.
+    assert response.status_code == 401
+
+    # Check the error message.
+    assert response.json()["detail"] == "Invalid or missing API key"
+
+
+def test_protected_route_with_valid_api_key():
+    # Send a request with the correct API key in the request headers.
+    response = client.get(
+        "/protected",
+        headers={"X-API-Key": "my-secret-key"}
+    )
+
+    # The request should succeed.
+    assert response.status_code == 200
+
+    # Check the success message.
+    assert response.json()["message"] == (
+        "You have access to the protected endpoint"
+    )
