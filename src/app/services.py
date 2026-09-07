@@ -1,6 +1,7 @@
 # Import the SQLAlchemy Session type.
 # It is used for type hints when working with database sessions.
 from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
 
 # Import the SQLAlchemy database model for AI models.
 from src.app.models import AIModelDB
@@ -68,10 +69,47 @@ def create_ai_model(
     return model
 
 
-# Retrieve all AI models from the database.
-def get_ai_models(db: Session) -> list[AIModelDB]:
-    # Query the AIModelDB table and return all records as a list.
-    return db.query(AIModelDB).all()
+# Retrieve AI models from the database using pagination.
+def get_ai_models(
+    db: Session,
+    skip: int = 0,
+    limit: int = 10,
+    provider:str | None = None,
+    sort_by: str = "id",
+    order: str = "asc"
+) -> list[AIModelDB]:
+
+    # Start a query for all AI models.
+    query = db.query(AIModelDB)
+
+    # Apply provider filtering only when a provider was supplied.
+    if provider:
+        query = query.filter(
+            AIModelDB.provider == provider
+        )
+
+    # Choose the column to sort by.
+    if sort_by == "name":
+        sort_column = AIModelDB.name
+    elif sort_by == "provider":
+        sort_column = AIModelDB.provider
+    else:
+        sort_column = AIModelDB.id
+
+    # Choose ascending or descending order.
+    if order == "desc":
+        query = query.order_by(desc(sort_column))
+    else:
+        query = query.order_by(asc(sort_column))
+
+    # Skip the requested number of records.
+    query = query.offset(skip)
+
+    # Limit the number of records returned.
+    query = query.limit(limit)
+
+    # Execute the query and return the results as a list.
+    return query.all()
 
 
 # Retrieve a single AI model using its ID.

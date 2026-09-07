@@ -268,3 +268,113 @@ def test_protected_route_with_valid_api_key():
     assert response.json()["message"] == (
         "You have access to the protected endpoint"
     )
+
+def test_list_models_with_limit():
+    # Request the models endpoint with a maximum of 2 models.
+    response = client.get(
+        "/models?limit=2",
+        headers={"X-API-Key": "my-secret-key"}
+    )
+
+    # The request should succeed.
+    assert response.status_code == 200
+
+    # The API should never return more than 2 models.
+    assert len(response.json()) <= 2
+
+def test_list_models_filter_by_provider():
+    # Request only models provided by OpenAI.
+    response = client.get(
+        "/models?provider=OpenAI",
+        headers={"X-API-Key": "my-secret-key"}
+    )
+
+    # The request should succeed.
+    assert response.status_code == 200
+
+    # Every returned model should have OpenAI as its provider.
+    for model in response.json():
+        assert model["provider"] == "OpenAI"
+
+def test_list_models_sort_by_name_ascending():
+    # Request models sorted by name in ascending order.
+    response = client.get(
+        "/models?sort_by=name&order=asc",
+        headers={"X-API-Key": "my-secret-key"}
+    )
+
+    # The request should succeed.
+    assert response.status_code == 200
+
+    # Get the models from the response.
+    models = response.json()
+
+    # Extract only the model names.
+    names = [model["name"] for model in models]
+
+    # Check that the names are in ascending order.
+    assert names == sorted(names)
+
+def test_list_models_sort_by_name_descending():
+    # Request models sorted by name in descending order.
+    response = client.get(
+        "/models?sort_by=name&order=desc",
+        headers={"X-API-Key": "my-secret-key"}
+    )
+
+    # The request should succeed.
+    assert response.status_code == 200
+
+    # Get the models from the response.
+    models = response.json()
+
+    # Extract only the model names.
+    names = [model["name"] for model in models]
+
+    # Check that the names are in descending order.
+    assert names == sorted(names, reverse=True)
+
+def test_list_models_invalid_sort_by():
+    # Send an invalid sorting field.
+    response = client.get(
+        "/models?sort_by=banana",
+        headers={"X-API-Key": "my-secret-key"}
+    )
+
+    # FastAPI should reject the invalid value.
+    assert response.status_code == 422
+
+def test_list_models_invalid_order():
+    # Send an invalid sorting order.
+    response = client.get(
+        "/models?order=random",
+        headers={"X-API-Key": "my-secret-key"}
+    )
+
+    # FastAPI should reject the invalid value.
+    assert response.status_code == 422
+
+def test_list_models_filter_sort_and_paginate():
+    # Request OpenAI models, sort them by name descending,
+    # and return a maximum of 2 models.
+    response = client.get(
+        "/models?provider=OpenAI&sort_by=name&order=desc&skip=0&limit=2",
+        headers={"X-API-Key": "my-secret-key"}
+    )
+
+    # The request should succeed.
+    assert response.status_code == 200
+
+    # Get the models from the response.
+    models = response.json()
+
+    # Pagination: no more than 2 models should be returned.
+    assert len(models) <= 2
+
+    # Filtering: every returned model must be from OpenAI.
+    for model in models:
+        assert model["provider"] == "OpenAI"
+
+    # Sorting: names must be in descending order.
+    names = [model["name"] for model in models]
+    assert names == sorted(names, reverse=True)

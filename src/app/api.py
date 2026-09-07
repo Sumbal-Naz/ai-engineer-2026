@@ -3,7 +3,8 @@
 # Depends handles dependency injection
 # HTTPException returns HTTP errors such as 404
 # status provides named HTTP status codes such as HTTP_201_CREATED
-from fastapi import FastAPI, Depends, HTTPException, status, Header
+from fastapi import FastAPI, Depends, HTTPException, status, Header, Query
+from typing import Literal
 
 # Import application settings from config.py
 from src.app.config import settings
@@ -75,11 +76,33 @@ def health():
 # response_model ensures every returned model follows AIModelResponse
 @app.get("/models", response_model=list[AIModelResponse])
 def list_models(
-    # Depends(get_db) creates/provides a database session for this request
+    # Number of models to skip
+    skip: int = Query(default=0, ge=0),
+
+    # Maximum number of models to return
+    limit: int = Query(default=10, ge=1, le=100),
+
+    # Optional provider filter.
+    provider: str | None = Query(default=None),
+
+    # Column used for sorting.
+    sort_by: Literal["id", "name", "provider"] = Query(default="id"),
+
+    # Sorting direction.
+    order: Literal["asc", "desc"] = Query(default="asc"),
+
+    # Database session
     db: Session = Depends(get_db)
 ):
-    # Call the service function to get all models
-    return get_ai_models(db)
+    # Get models using pagination
+    return get_ai_models(
+        db,
+        skip=skip,
+        limit=limit,
+        provider=provider,
+        sort_by=sort_by,
+        order=order
+    )
 
 @app.get("/protected")
 def protected_route(
