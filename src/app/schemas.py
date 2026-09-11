@@ -82,3 +82,10 @@ class AIModelUpdate(BaseModel):
 class AIModelDelete(BaseModel):
     # ID of the AI model that should be deleted.
     id: int
+
+class ErrorResponse(BaseModel):
+    # A machine-readable error code.
+    error: str
+
+    # A human-readable explanation of the error.
+    message: str

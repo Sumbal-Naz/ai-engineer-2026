@@ -10,7 +10,11 @@ from src.app.models import AIModelDB
 import logging
 
 # Import our custom exception for invalid project IDs.
-from .exceptions import InvalidProjectIDError
+from .exceptions import (
+    InvalidProjectIDError,
+    ModelNotFoundError,
+    DuplicateModelError
+)
 
 
 # Create a logger for this module.
@@ -46,6 +50,17 @@ def create_ai_model(
         name: str,
         provider: str
 ) -> AIModelDB:
+
+    # Check whether a model with the same name already exists.
+    existing_model = db.query(AIModelDB).filter(
+        AIModelDB.name == name
+    ).first()
+
+    # If it exists, raise a business exception.
+    if existing_model:
+        raise DuplicateModelError(
+            f"Model '{name}' already exists"
+        )
 
     # Create a new AIModelDB object.
     # At this point, it only exists in Python memory.
@@ -131,14 +146,16 @@ def update_ai_model(
         model_id: int,
         name: str,
         provider: str
-) -> AIModelDB | None:
+) -> AIModelDB:
 
-    # Find the existing model using its ID.
+    # Find the existing model.
     model = get_model_by_id(db, model_id)
 
-    # If no model exists with this ID, return None.
+    # Raise a business exception if it doesn't exist.
     if model is None:
-        return None
+        raise ModelNotFoundError(
+            f"Model with ID {model_id} not found"
+        )
 
     # Update the model's name.
     model.name = name
@@ -160,14 +177,16 @@ def update_ai_model(
 def delete_ai_model(
         db: Session,
         model_id: int
-) -> AIModelDB | None:
+) -> AIModelDB:
 
     # Find the model that should be deleted.
     model = get_model_by_id(db, model_id)
 
-    # If no model exists with this ID, return None.
+    # Raise an exception if the model doesn't exist.
     if model is None:
-        return None
+        raise ModelNotFoundError(
+            f"Model with ID {model_id} not found"
+        )
 
     # Mark the model for deletion.
     db.delete(model)
@@ -210,3 +229,17 @@ def get_project_status(project_id: int | str) -> str:
     raise InvalidProjectIDError(
         f"Unknown project ID: {project_id}"
     )
+
+def get_required_model(
+        db: Session,
+        model_id: int
+) -> AIModelDB:
+
+    model = get_model_by_id(db, model_id)
+
+    if model is None:
+        raise ModelNotFoundError(
+            f"Model with ID {model_id} not found"
+        )
+
+    return model

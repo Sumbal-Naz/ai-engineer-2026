@@ -50,13 +50,17 @@ def test_list_models():
 
 # Test that GET /models/{id} returns 404 when the model does not exist
 def test_get_model_not_found():
+    # Request a model that does not exist.
     response = client.get("/models/999999")
 
+    # The API should return 404 Not Found.
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Model not found"
-    }
 
+    # Check the consistent error response.
+    assert response.json() == {
+        "error": "MODEL_NOT_FOUND",
+        "message": "Model with ID 999999 not found"
+    }
 
 # Test that an existing model can be updated
 def test_update_model():
@@ -64,7 +68,7 @@ def test_update_model():
     create_response = client.post(
         "/models",
         json={
-            "name": "Test Model",
+            "name": "Update Test Model",
             "provider": "Test Provider"
         }
     )
@@ -109,7 +113,7 @@ def test_create_model_returns_201():
     response = client.post(
         "/models",
         json={
-            "name": "HTTP Test Model",
+            "name": "HTTP Test Model 2026 Unique 3",
             "provider": "OpenAI"
         }
     )
@@ -117,13 +121,43 @@ def test_create_model_returns_201():
     assert response.status_code == 201
 
     data = response.json()
-
-    assert data["name"] == "HTTP Test Model"
+    assert data["name"] == "HTTP Test Model 2026 Unique 3"
     assert data["provider"] == "OpenAI"
 
+def test_create_duplicate_model():
+    # Create the first model.
+    first_response = client.post(
+        "/models",
+        json={
+            "name": "Unique Duplicate Test Model 2",
+            "provider": "OpenAI"
+        }
+    )
+
+    # The first creation should succeed.
+    assert first_response.status_code == 201
+
+    # Try to create the same model again.
+    second_response = client.post(
+        "/models",
+        json={
+            "name": "Unique Duplicate Test Model 2",
+            "provider": "OpenAI"
+        }
+    )
+
+    # A duplicate should return 409 Conflict.
+    assert second_response.status_code == 409
+
+    # Check the consistent error response.
+    assert second_response.json() == {
+        "error": "DUPLICATE_MODEL",
+        "message": "Model 'Unique Duplicate Test Model 2' already exists"
+    }
 
 # Test that updating a non-existent model returns 404
 def test_update_model_not_found():
+    # Try to update a model that does not exist.
     response = client.put(
         "/models/999999",
         json={
@@ -132,9 +166,13 @@ def test_update_model_not_found():
         }
     )
 
+    # The API should return 404 Not Found.
     assert response.status_code == 404
+
+    # Check the consistent error response.
     assert response.json() == {
-        "detail": "Model not found"
+        "error": "MODEL_NOT_FOUND",
+        "message": "Model with ID 999999 not found"
     }
 
 
@@ -144,7 +182,7 @@ def test_delete_model():
     create_response = client.post(
         "/models",
         json={
-            "name": "Test Model",
+            "name": "Delete Test Model",
             "provider": "Test Provider"
         }
     )
@@ -165,18 +203,25 @@ def test_delete_model():
     get_response = client.get(f"/models/{model_id}")
 
     assert get_response.status_code == 404
+
     assert get_response.json() == {
-        "detail": "Model not found"
+        "error": "MODEL_NOT_FOUND",
+        "message": f"Model with ID {model_id} not found"
     }
 
 
 # Test that deleting a non-existent model returns 404
 def test_delete_model_not_found():
+    # Try to delete a model that does not exist.
     response = client.delete("/models/99999")
 
+    # The API should return 404 Not Found.
     assert response.status_code == 404
+
+    # Check the consistent error response.
     assert response.json() == {
-        "detail": "Model not found"
+        "error": "MODEL_NOT_FOUND",
+        "message": "Model with ID 99999 not found"
     }
 
 

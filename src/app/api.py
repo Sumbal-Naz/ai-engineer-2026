@@ -3,7 +3,8 @@
 # Depends handles dependency injection
 # HTTPException returns HTTP errors such as 404
 # status provides named HTTP status codes such as HTTP_201_CREATED
-from fastapi import FastAPI, Depends, HTTPException, status, Header, Query
+from fastapi import FastAPI, Depends, HTTPException, status, Header, Query, Request
+from fastapi.responses import JSONResponse
 from typing import Literal
 
 # Import application settings from config.py
@@ -20,7 +21,8 @@ from src.app.schemas import (
     AIModelResponse,  # Schema for returning an AI model
     AIModelRequest,   # Schema for creating an AI model
     AIModelUpdate,    # Schema for updating an AI model
-    AIModelDelete     # Schema for returning deleted model information
+    AIModelDelete,    # Schema for returning deleted model information
+    ErrorResponse
 )
 
 
@@ -29,8 +31,14 @@ from src.app.services import (
     create_ai_model,  # Create a new AI model
     get_ai_models,    # Get all AI models
     get_model_by_id,  # Get one AI model by ID
+    get_required_model,
     update_ai_model,  # Update an existing AI model
     delete_ai_model   # Delete an AI model
+)
+
+from src.app.exceptions import (
+    ModelNotFoundError,
+    DuplicateModelError
 )
 
 
@@ -40,6 +48,33 @@ app = FastAPI(
     title=settings.app_name,
     debug=settings.debug
 )
+
+@app.exception_handler(ModelNotFoundError)
+async def model_not_found_handler(
+    request: Request,
+    exc: ModelNotFoundError
+):
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={
+            "error": "MODEL_NOT_FOUND",
+            "message": str(exc)
+        }
+    )
+
+
+@app.exception_handler(DuplicateModelError)
+async def duplicate_model_handler(
+    request: Request,
+    exc: DuplicateModelError
+):
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "error": "DUPLICATE_MODEL",
+            "message": str(exc)
+        }
+    )
 
 def verify_api_key(
     x_api_key: str | None = Header(default=None)
@@ -148,18 +183,7 @@ def get_model_by_id_endpoint(
     # Get a database session for this request
     db: Session = Depends(get_db)
 ):
-    # Ask the service layer to find the model
-    model = get_model_by_id(db, model_id)
-
-    # If no model exists with this ID, return HTTP 404 Not Found
-    if model is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Model not found"
-        )
-
-    # Return the model when it exists
-    return model
+    return get_required_model(db, model_id)
 
 
 # Update an existing AI model
@@ -169,32 +193,17 @@ def get_model_by_id_endpoint(
     response_model=AIModelResponse
 )
 def update_model(
-    # Get model_id from the URL path
     model_id: int,
-
-    # Validate the new data sent by the client
     model_data: AIModelUpdate,
-
-    # Get a database session for this request
     db: Session = Depends(get_db)
 ):
-    # Call the service layer to update the model
-    model = update_ai_model(
+
+    return update_ai_model(
         db,
         model_id,
         model_data.name,
         model_data.provider
     )
-
-    # If the model does not exist, return HTTP 404 Not Found
-    if model is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Model not found"
-        )
-
-    # Return the updated model
-    return model
 
 
 # Delete an AI model
@@ -204,24 +213,11 @@ def update_model(
     response_model=AIModelDelete
 )
 def delete_model(
-    # Get model_id from the URL path
     model_id: int,
-
-    # Get a database session for this request
     db: Session = Depends(get_db)
 ):
-    # Call the service layer to delete the model
-    model = delete_ai_model(
+
+    return delete_ai_model(
         db,
         model_id
     )
-
-    # If the model does not exist, return HTTP 404 Not Found
-    if model is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Model not found"
-        )
-
-    # Return information about the deleted model
-    return model
