@@ -1,8 +1,7 @@
 # dataclass automatically creates useful methods such as __init__
 from dataclasses import dataclass
 
-# String defines the database column type
-from sqlalchemy import String
+from sqlalchemy import String, Boolean, Column, Integer
 
 # Mapped and mapped_column are used to define SQLAlchemy database columns
 from sqlalchemy.orm import Mapped, mapped_column
@@ -77,4 +76,37 @@ class AIModelDB(Base):
     description: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True
+    )
+
+class UserDB(Base):
+    """
+    Database model representing an authenticated API user.
+    """
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    username = Column(
+        String,
+        unique=True,
+        index=True,
+        nullable=False
+    )
+
+    password_hash = Column(
+        String,
+        nullable=False
+    )
+
+    is_active = Column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
+
+    role = Column(
+    String,
+    default="user",
+    nullable=False
     )

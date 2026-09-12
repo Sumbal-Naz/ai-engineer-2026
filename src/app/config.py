@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     debug: bool = False
     database_url: str = "sqlite:///./ai_engineer.db"
     environment: str = "development"
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     model_config = SettingsConfigDict(
         env_file=".env",

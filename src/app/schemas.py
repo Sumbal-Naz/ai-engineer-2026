@@ -89,3 +89,45 @@ class ErrorResponse(BaseModel):
 
     # A human-readable explanation of the error.
     message: str
+
+class UserCreate(BaseModel):
+    """
+    Data required to create a new user.
+    """
+
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=8, max_length=100)
+
+
+class UserResponse(BaseModel):
+    """
+    Safe user information returned by the API.
+
+    The password and password hash are intentionally excluded.
+    """
+
+    id: int
+    username: str
+    is_active: bool
+
+    model_config = {
+        "from_attributes": True
+    }
+
+class Token(BaseModel):
+    """
+    JWT access token returned after successful login.
+    """
+
+    access_token: str
+    token_type: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    is_active: bool
+    role: str
+
+    model_config = {
+        "from_attributes": True
+    }

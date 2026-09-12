@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc
 
 # Import the SQLAlchemy database model for AI models.
-from src.app.models import AIModelDB
+from src.app.models import AIModelDB, UserDB
+
+from src.app.auth import hash_password
 
 # Import Python's built-in logging module.
 import logging
@@ -243,3 +245,34 @@ def get_required_model(
         )
 
     return model
+
+def create_user(
+    db: Session,
+    username: str,
+    password: str
+) -> UserDB:
+    """
+    Create a new user with a securely hashed password.
+    """
+
+    existing_user = (
+        db.query(UserDB)
+        .filter(UserDB.username == username)
+        .first()
+    )
+
+    if existing_user:
+        raise ValueError("Username already exists")
+
+    hashed_password = hash_password(password)
+
+    user = UserDB(
+        username=username,
+        password_hash=hashed_password,
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return user
