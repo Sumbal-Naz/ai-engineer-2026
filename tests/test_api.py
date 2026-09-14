@@ -1,14 +1,4 @@
-from fastapi.testclient import TestClient
-
-from src.app.api import app
-
-
-# Create a test client for sending HTTP requests to the FastAPI app
-client = TestClient(app)
-
-
-# Test that the root endpoint returns the expected message
-def test_root():
+def test_root(client):
     response = client.get("/")
 
     assert response.status_code == 200
@@ -18,7 +8,7 @@ def test_root():
 
 
 # Test that the health endpoint returns a healthy status
-def test_health():
+def test_health(client):
     response = client.get("/health")
 
     assert response.status_code == 200
@@ -28,7 +18,7 @@ def test_health():
 
 
 # Test that the health endpoint returns JSON
-def test_health_response_headers():
+def test_health_response_headers(client):
     response = client.get("/health")
 
     assert response.status_code == 200
@@ -38,8 +28,8 @@ def test_health_response_headers():
 
 
 # Test that GET /models returns a list of models
-def test_list_models():
-    response = client.get("/models")
+def test_list_models(auth_client):
+    response = auth_client.get("/models")
 
     assert response.status_code == 200
 
@@ -49,9 +39,9 @@ def test_list_models():
 
 
 # Test that GET /models/{id} returns 404 when the model does not exist
-def test_get_model_not_found():
+def test_get_model_not_found(auth_client):
     # Request a model that does not exist.
-    response = client.get("/models/999999")
+    response = auth_client.get("/models/999999")
 
     # The API should return 404 Not Found.
     assert response.status_code == 404
@@ -63,9 +53,9 @@ def test_get_model_not_found():
     }
 
 # Test that an existing model can be updated
-def test_update_model():
+def test_update_model(auth_client):
     # Create a model first
-    create_response = client.post(
+    create_response = auth_client.post(
         "/models",
         json={
             "name": "Update Test Model",
@@ -79,7 +69,7 @@ def test_update_model():
     model_id = created_model["id"]
 
     # Update the model
-    response = client.put(
+    response = auth_client.put(
         f"/models/{model_id}",
         json={
             "name": "Updated Model",
@@ -97,7 +87,7 @@ def test_update_model():
     assert data["description"] == "Updated Model is provided by OpenAI."
 
     # Read the model again to confirm the update was saved
-    get_response = client.get(f"/models/{model_id}")
+    get_response = auth_client.get(f"/models/{model_id}")
 
     assert get_response.status_code == 200
 
@@ -109,11 +99,11 @@ def test_update_model():
 
 
 # Test that POST /models creates a new model and returns 201 Created
-def test_create_model_returns_201():
-    response = client.post(
+def test_create_model_returns_201(auth_client):
+    response = auth_client.post(
         "/models",
         json={
-            "name": "HTTP Test Model 2026 Unique 3",
+            "name": "HTTP Test Model 2026",
             "provider": "OpenAI"
         }
     )
@@ -121,15 +111,15 @@ def test_create_model_returns_201():
     assert response.status_code == 201
 
     data = response.json()
-    assert data["name"] == "HTTP Test Model 2026 Unique 3"
+    assert data["name"] == "HTTP Test Model 2026"
     assert data["provider"] == "OpenAI"
 
-def test_create_duplicate_model():
+def test_create_duplicate_model(auth_client):
     # Create the first model.
-    first_response = client.post(
+    first_response = auth_client.post(
         "/models",
         json={
-            "name": "Unique Duplicate Test Model 2",
+            "name": "Unique Duplicate Test Model",
             "provider": "OpenAI"
         }
     )
@@ -138,10 +128,10 @@ def test_create_duplicate_model():
     assert first_response.status_code == 201
 
     # Try to create the same model again.
-    second_response = client.post(
+    second_response = auth_client.post(
         "/models",
         json={
-            "name": "Unique Duplicate Test Model 2",
+            "name": "Unique Duplicate Test Model",
             "provider": "OpenAI"
         }
     )
@@ -152,13 +142,13 @@ def test_create_duplicate_model():
     # Check the consistent error response.
     assert second_response.json() == {
         "error": "DUPLICATE_MODEL",
-        "message": "Model 'Unique Duplicate Test Model 2' already exists"
+        "message": "Model 'Unique Duplicate Test Model' already exists"
     }
 
 # Test that updating a non-existent model returns 404
-def test_update_model_not_found():
+def test_update_model_not_found(auth_client):
     # Try to update a model that does not exist.
-    response = client.put(
+    response = auth_client.put(
         "/models/999999",
         json={
             "name": "Updated Model",
@@ -177,9 +167,9 @@ def test_update_model_not_found():
 
 
 # Test that an existing model can be deleted
-def test_delete_model():
+def test_delete_model(auth_client):
     # Create a model first
-    create_response = client.post(
+    create_response = auth_client.post(
         "/models",
         json={
             "name": "Delete Test Model",
@@ -192,7 +182,7 @@ def test_delete_model():
     model_id = create_response.json()["id"]
 
     # Delete the model
-    response = client.delete(f"/models/{model_id}")
+    response = auth_client.delete(f"/models/{model_id}")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -200,7 +190,7 @@ def test_delete_model():
     }
 
     # Verify that the model is actually gone
-    get_response = client.get(f"/models/{model_id}")
+    get_response = auth_client.get(f"/models/{model_id}")
 
     assert get_response.status_code == 404
 
@@ -211,9 +201,9 @@ def test_delete_model():
 
 
 # Test that deleting a non-existent model returns 404
-def test_delete_model_not_found():
+def test_delete_model_not_found(auth_client):
     # Try to delete a model that does not exist.
-    response = client.delete("/models/99999")
+    response = auth_client.delete("/models/99999")
 
     # The API should return 404 Not Found.
     assert response.status_code == 404
@@ -226,8 +216,8 @@ def test_delete_model_not_found():
 
 
 # Test that creating a model with an empty name returns 422
-def test_create_model_invalid_name():
-    response = client.post(
+def test_create_model_invalid_name(auth_client):
+    response = auth_client.post(
         "/models",
         json={
             "name": "",
@@ -239,8 +229,8 @@ def test_create_model_invalid_name():
 
 
 # Test that creating a model with an empty provider returns 422
-def test_create_model_invalid_provider():
-    response = client.post(
+def test_create_model_invalid_provider(auth_client):
+    response = auth_client.post(
         "/models",
         json={
             "name": "GPT",
@@ -252,8 +242,8 @@ def test_create_model_invalid_provider():
 
 
 # Test that creating a model without the required provider field returns 422
-def test_create_model_missing_provider():
-    response = client.post(
+def test_create_model_missing_provider(auth_client):
+    response = auth_client.post(
         "/models",
         json={
             "name": "GPT"
@@ -264,8 +254,8 @@ def test_create_model_missing_provider():
 
 
 # Test that updating a model with an empty name returns 422
-def test_update_model_invalid_name():
-    response = client.put(
+def test_update_model_invalid_name(auth_client):
+    response = auth_client.put(
         "/models/1",
         json={
             "name": "",
@@ -277,8 +267,8 @@ def test_update_model_invalid_name():
 
 
 # Test that updating a model with an empty provider returns 422
-def test_update_model_invalid_provider():
-    response = client.put(
+def test_update_model_invalid_provider(auth_client):
+    response = auth_client.put(
         "/models/1",
         json={
             "name": "GPT",
@@ -288,37 +278,41 @@ def test_update_model_invalid_provider():
 
     assert response.status_code == 422
 
-def test_protected_route_without_api_key():
-    # Send a request without the required API key.
+def test_protected_route_without_token(client):
+    """
+    Verify that the protected endpoint rejects
+    requests that do not contain a JWT token.
+    """
+
+    # Send a request without an Authorization header.
     response = client.get("/protected")
 
-    # The request should be rejected.
+    # The request should be rejected because no JWT was provided.
     assert response.status_code == 401
 
-    # Check the error message.
-    assert response.json()["detail"] == "Invalid or missing API key"
+    # Check the authentication error returned by get_current_user.
+    assert response.json()["detail"] == "Not authenticated"
 
+def test_protected_route_with_valid_token(auth_client):
+    """
+    Verify that an authenticated user can access the protected endpoint.
+    """
 
-def test_protected_route_with_valid_api_key():
-    # Send a request with the correct API key in the request headers.
-    response = client.get(
-        "/protected",
-        headers={"X-API-Key": "my-secret-key"}
-    )
+    # auth_client already contains a valid JWT token.
+    response = auth_client.get("/protected")
 
-    # The request should succeed.
+    # The authenticated request should succeed.
     assert response.status_code == 200
 
-    # Check the success message.
+    # Check the success message returned by the protected endpoint.
     assert response.json()["message"] == (
         "You have access to the protected endpoint"
     )
 
-def test_list_models_with_limit():
+def test_list_models_with_limit(auth_client):
     # Request the models endpoint with a maximum of 2 models.
-    response = client.get(
-        "/models?limit=2",
-        headers={"X-API-Key": "my-secret-key"}
+    response = auth_client.get(
+        "/models?limit=2"
     )
 
     # The request should succeed.
@@ -327,9 +321,9 @@ def test_list_models_with_limit():
     # The API should never return more than 2 models.
     assert len(response.json()) <= 2
 
-def test_list_models_filter_by_provider():
+def test_list_models_filter_by_provider(auth_client):
     # Request only models provided by OpenAI.
-    response = client.get(
+    response = auth_client.get(
         "/models?provider=OpenAI",
         headers={"X-API-Key": "my-secret-key"}
     )
@@ -341,9 +335,9 @@ def test_list_models_filter_by_provider():
     for model in response.json():
         assert model["provider"] == "OpenAI"
 
-def test_list_models_sort_by_name_ascending():
+def test_list_models_sort_by_name_ascending(auth_client):
     # Request models sorted by name in ascending order.
-    response = client.get(
+    response = auth_client.get(
         "/models?sort_by=name&order=asc",
         headers={"X-API-Key": "my-secret-key"}
     )
@@ -360,9 +354,9 @@ def test_list_models_sort_by_name_ascending():
     # Check that the names are in ascending order.
     assert names == sorted(names)
 
-def test_list_models_sort_by_name_descending():
+def test_list_models_sort_by_name_descending(auth_client):
     # Request models sorted by name in descending order.
-    response = client.get(
+    response = auth_client.get(
         "/models?sort_by=name&order=desc",
         headers={"X-API-Key": "my-secret-key"}
     )
@@ -379,9 +373,9 @@ def test_list_models_sort_by_name_descending():
     # Check that the names are in descending order.
     assert names == sorted(names, reverse=True)
 
-def test_list_models_invalid_sort_by():
+def test_list_models_invalid_sort_by(auth_client):
     # Send an invalid sorting field.
-    response = client.get(
+    response = auth_client.get(
         "/models?sort_by=banana",
         headers={"X-API-Key": "my-secret-key"}
     )
@@ -389,9 +383,9 @@ def test_list_models_invalid_sort_by():
     # FastAPI should reject the invalid value.
     assert response.status_code == 422
 
-def test_list_models_invalid_order():
+def test_list_models_invalid_order(auth_client):
     # Send an invalid sorting order.
-    response = client.get(
+    response = auth_client.get(
         "/models?order=random",
         headers={"X-API-Key": "my-secret-key"}
     )
@@ -399,10 +393,10 @@ def test_list_models_invalid_order():
     # FastAPI should reject the invalid value.
     assert response.status_code == 422
 
-def test_list_models_filter_sort_and_paginate():
+def test_list_models_filter_sort_and_paginate(auth_client):
     # Request OpenAI models, sort them by name descending,
     # and return a maximum of 2 models.
-    response = client.get(
+    response = auth_client.get(
         "/models?provider=OpenAI&sort_by=name&order=desc&skip=0&limit=2",
         headers={"X-API-Key": "my-secret-key"}
     )

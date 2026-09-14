@@ -309,8 +309,19 @@ def list_models(
 
 @app.get("/protected")
 def protected_route(
-    api_key: str = Depends(verify_api_key)
+    current_user: UserDB = Depends(get_current_user)
 ):
+    """
+    Protected endpoint that requires a valid JWT access token.
+
+    The get_current_user dependency:
+    1. Reads the JWT from the Authorization header.
+    2. Verifies the token.
+    3. Finds the corresponding user.
+    4. Ensures the user is active.
+    5. Returns the authenticated UserDB object.
+    """
+
     return {
         "message": "You have access to the protected endpoint"
     }
