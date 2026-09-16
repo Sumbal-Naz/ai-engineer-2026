@@ -1,3 +1,7 @@
+from unittest.mock import patch
+from src.app.api import app, get_current_user
+from src.app.models import UserDB
+
 def test_root(client):
     response = client.get("/")
 
@@ -417,3 +421,123 @@ def test_list_models_filter_sort_and_paginate(auth_client):
     # Sorting: names must be in descending order.
     names = [model["name"] for model in models]
     assert names == sorted(names, reverse=True)
+
+def test_ai_endpoint(client):
+    response = client.get(
+        "/ai",
+        params={"prompt": "Hello"}
+    )
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "prompt": "Hello",
+        "answer": "Real AI response for: Hello"
+    }
+
+def test_ai_endpoint_with_mock(client):
+    with patch("src.app.api.generate_answer") as mock_generate:
+
+        mock_generate.return_value = "Mocked AI response"
+
+        response = client.get(
+            "/ai",
+            params={"prompt": "Hello"}
+        )
+
+        assert response.status_code == 200
+
+        assert response.json() == {
+            "prompt": "Hello",
+            "answer": "Mocked AI response"
+        }
+
+        mock_generate.assert_called_once_with("Hello")
+
+def override_admin_user():
+    """
+    Return a fake authenticated admin user.
+
+    This returns a UserDB object because the
+    /admin endpoint expects current_user.role.
+    """
+
+    return UserDB(
+        id=1,
+        username="test_admin",
+        password_hash="fake_hash",
+        is_active=True,
+        role="admin"
+    )
+
+def test_protected_endpoint_as_admin(client):
+    app.dependency_overrides[
+    get_current_user
+    ] = override_admin_user
+
+    try:
+        response = client.get("/protected")
+
+        assert response.status_code == 200
+
+    finally:
+        app.dependency_overrides.clear()
+
+def override_normal_user():
+    """
+    Return a fake authenticated normal user.
+
+    We don't need a real password because the test
+    bypasses the JWT authentication dependency.
+    """
+
+    return UserDB(
+        id=2,
+        username="test_user",
+        password_hash="fake_hash",
+        is_active=True,
+        role="user"
+    )
+
+def test_admin_endpoint_as_normal_user(normal_user_client):
+
+    response = normal_user_client.get("/admin")
+
+    assert response.status_code == 403
+
+    assert response.json() == {
+        "detail": "Admin access required"
+    }
+
+def test_admin_endpoint_as_admin(admin_client):
+
+    response = admin_client.get("/admin")
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "message": "You have admin access"
+    }
+
+def test_ai_endpoint_service_failure(client):
+    """
+    Verify that an AI service failure is handled
+    with a proper HTTP 500 response.
+    """
+
+    with patch("src.app.api.generate_answer") as mock_generate:
+
+        mock_generate.side_effect = Exception(
+            "AI service unavailable"
+        )
+
+        response = client.get(
+            "/ai",
+            params={"prompt": "Hello"}
+        )
+
+        assert response.status_code == 500
+
+        assert response.json() == {
+            "detail": "AI service unavailable"
+        }

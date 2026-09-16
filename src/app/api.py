@@ -42,7 +42,8 @@ from src.app.schemas import (
 )
 
 from src.app.services import (
-    create_user
+    create_user,
+    generate_answer
 )
 
 # Import service functions that contain the database/business logic
@@ -326,6 +327,26 @@ def protected_route(
         "message": "You have access to the protected endpoint"
     }
 
+@app.get("/admin")
+def admin_route(
+    current_user: UserDB = Depends(get_current_user)
+):
+    """
+    Admin-only endpoint.
+
+    The user must be authenticated and have the
+    admin role to access this endpoint.
+    """
+
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
+
+    return {
+        "message": "You have admin access"
+    }
 # Create a new AI model
 # POST /models receives model data and saves a new model
 # Returns 201 Created when successful
@@ -408,3 +429,25 @@ def delete_model(
     )
 
 
+@app.get("/ai")
+def ask_ai(prompt: str):
+    """
+    Generate an answer using the AI service.
+
+    If the AI service fails, return a controlled
+    HTTP 500 error instead of exposing the exception.
+    """
+
+    try:
+        answer = generate_answer(prompt)
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="AI service unavailable"
+        )
+
+    return {
+        "prompt": prompt,
+        "answer": answer
+    }

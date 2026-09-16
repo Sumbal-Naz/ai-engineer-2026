@@ -276,3 +276,18 @@ def create_user(
     db.refresh(user)
 
     return user
+
+# A simple service that represents an AI/LLM operation.
+# In a real AI application, this could call an LLM,
+# an ML model, or an external AI API.
+
+
+def generate_answer(prompt: str) -> str:
+    """
+    Generate an answer for the given prompt.
+
+    For now, this is only a simple implementation.
+    Later, this could call a real AI model.
+    """
+
+    return f"Real AI response for: {prompt}"

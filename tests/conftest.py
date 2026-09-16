@@ -10,10 +10,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Import the application's FastAPI app.
-from src.app.api import app
+from src.app.api import app, get_current_user
 
 # Import the SQLAlchemy Base class and database dependency.
 from src.app.database import Base, get_db
+from src.app.models import UserDB
 
 
 # ---------------------------------------------------------
@@ -206,3 +207,59 @@ def auth_client(db_session):
     finally:
         # Remove dependency overrides after the test.
         app.dependency_overrides.clear()
+
+@pytest.fixture
+def admin_client(client):
+    """
+    Provide a TestClient with authentication overridden
+    as an admin user.
+    """
+
+    app.dependency_overrides[
+        get_current_user
+    ] = override_admin_user
+
+    yield client
+
+    app.dependency_overrides.clear()
+
+def override_admin_user():
+    """
+    Return a fake authenticated admin user.
+    """
+
+    return UserDB(
+        id=1,
+        username="test_admin",
+        password_hash="fake_hash",
+        is_active=True,
+        role="admin"
+    )
+
+def override_normal_user():
+    """
+    Return a fake authenticated normal user.
+    """
+
+    return UserDB(
+        id=2,
+        username="test_user",
+        password_hash="fake_hash",
+        is_active=True,
+        role="user"
+    )
+
+@pytest.fixture
+def normal_user_client(client):
+    """
+    Provide a TestClient with authentication overridden
+    as a normal user.
+    """
+
+    app.dependency_overrides[
+        get_current_user
+    ] = override_normal_user
+
+    yield client
+
+    app.dependency_overrides.clear()
