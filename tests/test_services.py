@@ -1,6 +1,8 @@
 import pytest
-from src.app.services import get_project_status
+
 from src.app.exceptions import InvalidProjectIDError
+from src.app.services import get_project_status
+
 
 def test_get_project_status():
     assert get_project_status(1) == "completed"
@@ -17,4 +19,3 @@ def test_get_project_status_invalid_id():
 def test_get_project_status_invalid_input():
     with pytest.raises(InvalidProjectIDError):
         get_project_status("abc")
-    

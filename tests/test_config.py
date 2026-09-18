@@ -12,5 +12,6 @@ def test_debug():
 def test_database_url():
     assert settings.database_url == "sqlite:///./ai_engineer.db"
 
+
 def test_environment():
     assert settings.environment == "development"

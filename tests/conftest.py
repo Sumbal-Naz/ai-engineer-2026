@@ -16,7 +16,6 @@ from src.app.api import app, get_current_user
 from src.app.database import Base, get_db
 from src.app.models import UserDB
 
-
 # ---------------------------------------------------------
 # TEST DATABASE
 # ---------------------------------------------------------
@@ -34,24 +33,18 @@ TEST_DATABASE_URL = "sqlite:///./ai_engineer_test.db"
 # TestClient may interact with the database from different
 # threads.
 test_engine = create_engine(
-    TEST_DATABASE_URL,
-    connect_args={
-        "check_same_thread": False
-    }
+    TEST_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 
 
 # Create a session factory connected to the test database.
-TestSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=test_engine
-)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 # ---------------------------------------------------------
 # DATABASE FIXTURE
 # ---------------------------------------------------------
+
 
 @pytest.fixture
 def db_session():
@@ -89,6 +82,7 @@ def db_session():
 # ---------------------------------------------------------
 # DATABASE DEPENDENCY OVERRIDE
 # ---------------------------------------------------------
+
 
 @pytest.fixture
 def client(db_session):
@@ -129,6 +123,7 @@ def client(db_session):
         # This prevents one test's configuration from
         # affecting another test.
         app.dependency_overrides.clear()
+
 
 @pytest.fixture
 def auth_client(db_session):
@@ -195,11 +190,7 @@ def auth_client(db_session):
         access_token = login_response.json()["access_token"]
 
         # Add the JWT to the client.
-        test_client.headers.update(
-            {
-                "Authorization": f"Bearer {access_token}"
-            }
-        )
+        test_client.headers.update({"Authorization": f"Bearer {access_token}"})
 
         # Return the authenticated client to the test.
         yield test_client
@@ -208,6 +199,7 @@ def auth_client(db_session):
         # Remove dependency overrides after the test.
         app.dependency_overrides.clear()
 
+
 @pytest.fixture
 def admin_client(client):
     """
@@ -215,13 +207,12 @@ def admin_client(client):
     as an admin user.
     """
 
-    app.dependency_overrides[
-        get_current_user
-    ] = override_admin_user
+    app.dependency_overrides[get_current_user] = override_admin_user
 
     yield client
 
     app.dependency_overrides.clear()
+
 
 def override_admin_user():
     """
@@ -233,8 +224,9 @@ def override_admin_user():
         username="test_admin",
         password_hash="fake_hash",
         is_active=True,
-        role="admin"
+        role="admin",
     )
+
 
 def override_normal_user():
     """
@@ -246,8 +238,9 @@ def override_normal_user():
         username="test_user",
         password_hash="fake_hash",
         is_active=True,
-        role="user"
+        role="user",
     )
+
 
 @pytest.fixture
 def normal_user_client(client):
@@ -256,9 +249,7 @@ def normal_user_client(client):
     as a normal user.
     """
 
-    app.dependency_overrides[
-        get_current_user
-    ] = override_normal_user
+    app.dependency_overrides[get_current_user] = override_normal_user
 
     yield client
 

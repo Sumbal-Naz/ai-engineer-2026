@@ -43,12 +43,10 @@ class AIModelResponse(BaseModel):
 
     # Allow Pydantic to create this schema directly from
     # SQLAlchemy ORM model objects and their attributes.
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
     # Create an additional field whose value is calculated automatically.
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def description(self) -> str:
         # Return a human-readable description of the AI model.
@@ -83,12 +81,14 @@ class AIModelDelete(BaseModel):
     # ID of the AI model that should be deleted.
     id: int
 
+
 class ErrorResponse(BaseModel):
     # A machine-readable error code.
     error: str
 
     # A human-readable explanation of the error.
     message: str
+
 
 class UserCreate(BaseModel):
     """
@@ -99,21 +99,6 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=8, max_length=100)
 
 
-class UserResponse(BaseModel):
-    """
-    Safe user information returned by the API.
-
-    The password and password hash are intentionally excluded.
-    """
-
-    id: int
-    username: str
-    is_active: bool
-
-    model_config = {
-        "from_attributes": True
-    }
-
 class Token(BaseModel):
     """
     JWT access token returned after successful login.
@@ -122,12 +107,11 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class UserResponse(BaseModel):
     id: int
     username: str
     is_active: bool
     role: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}

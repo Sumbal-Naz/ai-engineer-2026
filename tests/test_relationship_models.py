@@ -6,17 +6,13 @@ from sqlalchemy.orm import sessionmaker
 from src.app.database import Base
 
 # Import the relationship practice models.
-from src.app.relationship_models import (
-    ProviderDB,
-    AIModelRelationship
-)
+from src.app.relationship_models import AIModelRelationship, ProviderDB
 
 
 def test_provider_has_many_models():
     # Create a temporary in-memory SQLite database for this test.
     engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False}
+        "sqlite:///:memory:", connect_args={"check_same_thread": False}
     )
 
     # Create all database tables in the temporary database.

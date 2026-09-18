@@ -1,13 +1,13 @@
-from pwdlib import PasswordHash
-
 from datetime import datetime, timedelta, timezone
 
 import jwt
+from pwdlib import PasswordHash
 
 from src.app.config import settings
 
 # Password hashing utility.
 password_hash = PasswordHash.recommended()
+
 
 def hash_password(password: str) -> str:
     """
@@ -16,22 +16,14 @@ def hash_password(password: str) -> str:
     return password_hash.hash(password)
 
 
-def verify_password(
-    plain_password: str,
-    hashed_password: str
-) -> bool:
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a plain-text password against its stored hash.
     """
-    return password_hash.verify(
-        plain_password,
-        hashed_password
-    )
+    return password_hash.verify(plain_password, hashed_password)
 
-def create_access_token(
-    user_id: int,
-    username: str
-) -> str:
+
+def create_access_token(user_id: int, username: str) -> str:
     """
     Create a signed JWT access token for an authenticated user.
     """

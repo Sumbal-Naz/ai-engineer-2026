@@ -1,7 +1,6 @@
 # Import tools for creating the database engine and managing sessions
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 # Database connection URL
 # This creates a SQLite database file named "ai_engineer.db"
@@ -14,11 +13,10 @@ DATABASE_URL = "sqlite:///./ai_engineer.db"
 # and the SQLite database.
 engine = create_engine(
     DATABASE_URL,
-
     # SQLite normally restricts a connection to the thread that created it.
     # Setting this to False allows the connection to be used across threads,
     # which is useful when working with FastAPI.
-    connect_args={"check_same_thread": False}
+    connect_args={"check_same_thread": False},
 )
 
 
@@ -28,13 +26,11 @@ engine = create_engine(
 SessionLocal = sessionmaker(
     # Changes are not automatically committed to the database.
     autocommit=False,
-
     # Changes are not automatically sent (flushed) to the database.
     # We control when this happens manually.
     autoflush=False,
-
     # Connect every session created by this factory to our engine.
-    bind=engine
+    bind=engine,
 )
 
 

@@ -1,23 +1,21 @@
 # Import the SQLAlchemy Session type.
 # It is used for type hints when working with database sessions.
-from sqlalchemy.orm import Session
+# Import Python's built-in logging module.
+import logging
+from typing import Any
+
 from sqlalchemy import asc, desc
+from sqlalchemy.orm import Session
+
+from src.app.auth import hash_password
+from src.app.exceptions import (
+    DuplicateModelError,
+    InvalidProjectIDError,
+    ModelNotFoundError,
+)
 
 # Import the SQLAlchemy database model for AI models.
 from src.app.models import AIModelDB, UserDB
-
-from src.app.auth import hash_password
-
-# Import Python's built-in logging module.
-import logging
-
-# Import our custom exception for invalid project IDs.
-from .exceptions import (
-    InvalidProjectIDError,
-    ModelNotFoundError,
-    DuplicateModelError
-)
-
 
 # Create a logger for this module.
 # __name__ helps identify where a log message came from.
@@ -47,29 +45,18 @@ def calculate_age(birth_year: int, current_year: int) -> int:
 
 
 # Create and save a new AI model in the database.
-def create_ai_model(
-        db: Session,
-        name: str,
-        provider: str
-) -> AIModelDB:
+def create_ai_model(db: Session, name: str, provider: str) -> AIModelDB:
 
     # Check whether a model with the same name already exists.
-    existing_model = db.query(AIModelDB).filter(
-        AIModelDB.name == name
-    ).first()
+    existing_model = db.query(AIModelDB).filter(AIModelDB.name == name).first()
 
     # If it exists, raise a business exception.
     if existing_model:
-        raise DuplicateModelError(
-            f"Model '{name}' already exists"
-        )
+        raise DuplicateModelError(f"Model '{name}' already exists")
 
     # Create a new AIModelDB object.
     # At this point, it only exists in Python memory.
-    model = AIModelDB(
-        name=name,
-        provider=provider
-    )
+    model = AIModelDB(name=name, provider=provider)
 
     # Add the new model object to the database session.
     db.add(model)
@@ -91,9 +78,9 @@ def get_ai_models(
     db: Session,
     skip: int = 0,
     limit: int = 10,
-    provider:str | None = None,
+    provider: str | None = None,
     sort_by: str = "id",
-    order: str = "asc"
+    order: str = "asc",
 ) -> list[AIModelDB]:
 
     # Start a query for all AI models.
@@ -101,10 +88,9 @@ def get_ai_models(
 
     # Apply provider filtering only when a provider was supplied.
     if provider:
-        query = query.filter(
-            AIModelDB.provider == provider
-        )
+        query = query.filter(AIModelDB.provider == provider)
 
+    sort_column: Any
     # Choose the column to sort by.
     if sort_by == "name":
         sort_column = AIModelDB.name
@@ -130,34 +116,22 @@ def get_ai_models(
 
 
 # Retrieve a single AI model using its ID.
-def get_model_by_id(
-        db: Session,
-        model_id: int
-) -> AIModelDB | None:
+def get_model_by_id(db: Session, model_id: int) -> AIModelDB | None:
 
     # Query the database for a model whose ID matches model_id.
     # .first() returns the first matching record or None if no record exists.
-    return db.query(AIModelDB).filter(
-        AIModelDB.id == model_id
-    ).first()
+    return db.query(AIModelDB).filter(AIModelDB.id == model_id).first()
 
 
 # Update an existing AI model in the database.
-def update_ai_model(
-        db: Session,
-        model_id: int,
-        name: str,
-        provider: str
-) -> AIModelDB:
+def update_ai_model(db: Session, model_id: int, name: str, provider: str) -> AIModelDB:
 
     # Find the existing model.
     model = get_model_by_id(db, model_id)
 
     # Raise a business exception if it doesn't exist.
     if model is None:
-        raise ModelNotFoundError(
-            f"Model with ID {model_id} not found"
-        )
+        raise ModelNotFoundError(f"Model with ID {model_id} not found")
 
     # Update the model's name.
     model.name = name
@@ -176,19 +150,14 @@ def update_ai_model(
 
 
 # Delete an AI model from the database.
-def delete_ai_model(
-        db: Session,
-        model_id: int
-) -> AIModelDB:
+def delete_ai_model(db: Session, model_id: int) -> AIModelDB:
 
     # Find the model that should be deleted.
     model = get_model_by_id(db, model_id)
 
     # Raise an exception if the model doesn't exist.
     if model is None:
-        raise ModelNotFoundError(
-            f"Model with ID {model_id} not found"
-        )
+        raise ModelNotFoundError(f"Model with ID {model_id} not found")
 
     # Mark the model for deletion.
     db.delete(model)
@@ -205,13 +174,11 @@ def delete_ai_model(
 # Exceptions and Logging
 # ==============================
 
+
 # Get the status of a project using its ID.
 def get_project_status(project_id: int | str) -> str:
     # Log that we are checking the project status.
-    logger.info(
-        "Checking project status for ID: %s",
-        project_id
-    )
+    logger.info("Checking project status for ID: %s", project_id)
 
     # Accept both the integer 1 and string "1".
     if project_id == "1" or project_id == 1:
@@ -222,44 +189,28 @@ def get_project_status(project_id: int | str) -> str:
         return "in_progress"
 
     # Log a warning when an invalid project ID is received.
-    logger.warning(
-        "Invalid project ID received: %s",
-        project_id
-    )
+    logger.warning("Invalid project ID received: %s", project_id)
 
     # Raise our custom exception for unknown project IDs.
-    raise InvalidProjectIDError(
-        f"Unknown project ID: {project_id}"
-    )
+    raise InvalidProjectIDError(f"Unknown project ID: {project_id}")
 
-def get_required_model(
-        db: Session,
-        model_id: int
-) -> AIModelDB:
+
+def get_required_model(db: Session, model_id: int) -> AIModelDB:
 
     model = get_model_by_id(db, model_id)
 
     if model is None:
-        raise ModelNotFoundError(
-            f"Model with ID {model_id} not found"
-        )
+        raise ModelNotFoundError(f"Model with ID {model_id} not found")
 
     return model
 
-def create_user(
-    db: Session,
-    username: str,
-    password: str
-) -> UserDB:
+
+def create_user(db: Session, username: str, password: str) -> UserDB:
     """
     Create a new user with a securely hashed password.
     """
 
-    existing_user = (
-        db.query(UserDB)
-        .filter(UserDB.username == username)
-        .first()
-    )
+    existing_user = db.query(UserDB).filter(UserDB.username == username).first()
 
     if existing_user:
         raise ValueError("Username already exists")
@@ -276,6 +227,7 @@ def create_user(
     db.refresh(user)
 
     return user
+
 
 # A simple service that represents an AI/LLM operation.
 # In a real AI application, this could call an LLM,
