@@ -1,0 +1,4 @@
+Department,EmployeeCount,AverageSalary,TotalSalary
+Finance,3,74000.0,222000
+HR,3,64000.0,192000
+IT,4,78750.0,315000
